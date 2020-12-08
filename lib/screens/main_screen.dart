@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,6 +17,19 @@ class _MainScreenState extends State<MainScreen> {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController googleMapController;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  Position currentPosition;
+  final geolocator = Geolocator();
+  final mapStore = MapStore();
+
+  //position
+  Future<void> locatePosition() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    LatLng latLngPosition = LatLng(position.latitude, position.longitude);
+    final cameraPosition = CameraPosition(target: latLngPosition, zoom: 18);
+    googleMapController
+        .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  }
 
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(-19.9604937, -43.9955722),
@@ -22,10 +38,12 @@ class _MainScreenState extends State<MainScreen> {
   );
 
   static final CameraPosition _kLake = CameraPosition(
-      bearing: 192.8334901395799,
-      target: LatLng(37.43296265331129, -122.08832357078792),
-      tilt: 59.440717697143555,
-      zoom: 19.151926040649414);
+    bearing: 192.8334901395799,
+    target: LatLng(37.43296265331129, -122.08832357078792),
+    tilt: 59.440717697143555,
+    zoom: 19.151926040649414,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,22 +114,31 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: _kGooglePlex,
-            mapType: MapType.satellite,
-            buildingsEnabled: true,
-            compassEnabled: true,
-            zoomGesturesEnabled: true,
-            myLocationButtonEnabled: true,
-            myLocationEnabled: true,
-            onMapCreated: (controller) {
-              _controller.complete(controller);
-              googleMapController = controller;
-            },
-            trafficEnabled: true,
-            rotateGesturesEnabled: true,
-            scrollGesturesEnabled: true,
-          ),
+          Observer(builder: (_) {
+            return GoogleMap(
+              padding: EdgeInsets.only(bottom: mapStore.paddingBottom),
+              initialCameraPosition: _kGooglePlex,
+              mapType: MapType.satellite,
+              buildingsEnabled: true,
+              compassEnabled: true,
+              zoomGesturesEnabled: true,
+              myLocationButtonEnabled: true,
+              myLocationEnabled: true,
+              zoomControlsEnabled: true,
+              onMapCreated: (controller) {
+                _controller.complete(controller);
+                googleMapController = controller;
+
+                mapStore.setBottomPadding(400);
+
+                //get Current position
+                locatePosition();
+              },
+              trafficEnabled: true,
+              rotateGesturesEnabled: true,
+              scrollGesturesEnabled: true,
+            );
+          }),
 
           //hamburguerButton for Drawer
           Positioned(
