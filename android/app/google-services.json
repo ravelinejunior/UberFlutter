@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "329915254383",
+    "firebase_url": "https://flubber-75f9c.firebaseio.com",
+    "project_id": "flubber-75f9c",
+    "storage_bucket": "flubber-75f9c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:329915254383:android:98351cd7bf452e627a2f9a",
+        "android_client_info": {
+          "package_name": "br.com.ravelineber.UberFlutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "329915254383-7nnmpuph7ssv30r35e4e6sehrf5tvhrg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "br.com.ravelineber.UberFlutter",
+            "certificate_hash": "9a1ff5082c5b30cc9a71d37afb5ebee48ece9dc0"
+          }
+        },
+        {
+          "client_id": "329915254383-l2f3lcu0iqsvphhda2rbhtoob9oo57pe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqi6vCPNqlKYv-1G6gE7Zp_foiTvp7wAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "329915254383-l2f3lcu0iqsvphhda2rbhtoob9oo57pe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
