@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:UberFlutter/request/assistantMethods.dart';
 import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -29,6 +30,9 @@ class _MainScreenState extends State<MainScreen> {
     final cameraPosition = CameraPosition(target: latLngPosition, zoom: 18);
     googleMapController
         .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+
+    String address = await AssistantMethods.searchCoordinateAddress(position);
+    print("My address: $address");
   }
 
   static final CameraPosition _kGooglePlex = CameraPosition(

@@ -1,5 +1,5 @@
 import 'package:UberFlutter/screens/login/login_screen.dart';
-import 'package:UberFlutter/screens/main_screen.dart';
+import 'package:UberFlutter/screens/main/main_screen.dart';
 import 'package:UberFlutter/screens/signup/signup_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       debugShowMaterialGrid: false,
       showSemanticsDebugger: false,
-      initialRoute: LoginScreen.idScreen,
+      initialRoute: MainScreen.idScreen,
       routes: {
         SignupScreen.idScreen: (context) => SignupScreen(),
         LoginScreen.idScreen: (context) => LoginScreen(),
