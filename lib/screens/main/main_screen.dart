@@ -138,12 +138,15 @@ class _MainScreenState extends State<MainScreen> {
                 _controller.complete(controller);
                 googleMapController = controller;
 
-                mapStore.setBottomPadding(400);
+                mapStore.setBottomPadding(350);
 
                 //get Current position
                 locatePosition();
               },
               trafficEnabled: true,
+              indoorViewEnabled: true,
+              tiltGesturesEnabled: true,
+              mapToolbarEnabled: true,
               rotateGesturesEnabled: true,
               scrollGesturesEnabled: true,
             );
@@ -221,7 +224,7 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                       splashColor: Colors.orange.withAlpha(200),
                       child: Container(
-                        height: MediaQuery.of(context).size.height / 20,
+                        height: MediaQuery.of(context).size.height / 17,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.all(Radius.circular(5)),
@@ -266,23 +269,29 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ],
                     ),
-                    Divider(height: 24),
-                    Row(
-                      children: [
-                        Icon(Icons.work, color: Colors.grey),
-                        const SizedBox(width: 12),
-                        Column(
-                          children: [
-                            Text('Add Work'),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Your Office address.',
-                              style: TextStyle(
-                                  color: Colors.grey[400], fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Divider(
+                      height: 16,
+                      color: Colors.black38,
+                      thickness: 0.5,
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.work, color: Colors.grey),
+                          const SizedBox(width: 12),
+                          Column(
+                            children: [
+                              Text('Add Work'),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your Office address.',
+                                style: TextStyle(
+                                    color: Colors.grey[400], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
