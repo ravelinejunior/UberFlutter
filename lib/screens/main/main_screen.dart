@@ -1,7 +1,14 @@
 import 'dart:async';
 
+import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
+import 'package:UberFlutter/request/assistantMethods.dart';
+import 'package:UberFlutter/screens/search/search_screen.dart';
+import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
   static const String idScreen = "main";
@@ -14,6 +21,23 @@ class _MainScreenState extends State<MainScreen> {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController googleMapController;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  Position currentPosition;
+  final geolocator = Geolocator();
+  final mapStore = MapStore();
+
+  //position
+  Future<void> locatePosition() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    LatLng latLngPosition = LatLng(position.latitude, position.longitude);
+    final cameraPosition = CameraPosition(target: latLngPosition, zoom: 18);
+    googleMapController
+        .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+
+    String address =
+        await AssistantMethods.searchCoordinateAddress(position, context);
+    print("My address: $address");
+  }
 
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(-19.9604937, -43.9955722),
@@ -22,12 +46,15 @@ class _MainScreenState extends State<MainScreen> {
   );
 
   static final CameraPosition _kLake = CameraPosition(
-      bearing: 192.8334901395799,
-      target: LatLng(37.43296265331129, -122.08832357078792),
-      tilt: 59.440717697143555,
-      zoom: 19.151926040649414);
+    bearing: 192.8334901395799,
+    target: LatLng(37.43296265331129, -122.08832357078792),
+    tilt: 59.440717697143555,
+    zoom: 19.151926040649414,
+  );
+
   @override
   Widget build(BuildContext context) {
+    final addressDataUser = Provider.of<AppData>(context).pickUpLocation;
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
@@ -96,22 +123,34 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: _kGooglePlex,
-            mapType: MapType.satellite,
-            buildingsEnabled: true,
-            compassEnabled: true,
-            zoomGesturesEnabled: true,
-            myLocationButtonEnabled: true,
-            myLocationEnabled: true,
-            onMapCreated: (controller) {
-              _controller.complete(controller);
-              googleMapController = controller;
-            },
-            trafficEnabled: true,
-            rotateGesturesEnabled: true,
-            scrollGesturesEnabled: true,
-          ),
+          Observer(builder: (_) {
+            return GoogleMap(
+              padding: EdgeInsets.only(bottom: mapStore.paddingBottom),
+              initialCameraPosition: _kGooglePlex,
+              mapType: MapType.satellite,
+              buildingsEnabled: true,
+              compassEnabled: true,
+              zoomGesturesEnabled: true,
+              myLocationButtonEnabled: true,
+              myLocationEnabled: true,
+              zoomControlsEnabled: true,
+              onMapCreated: (controller) {
+                _controller.complete(controller);
+                googleMapController = controller;
+
+                mapStore.setBottomPadding(350);
+
+                //get Current position
+                locatePosition();
+              },
+              trafficEnabled: true,
+              indoorViewEnabled: true,
+              tiltGesturesEnabled: true,
+              mapToolbarEnabled: true,
+              rotateGesturesEnabled: true,
+              scrollGesturesEnabled: true,
+            );
+          }),
 
           //hamburguerButton for Drawer
           Positioned(
@@ -177,27 +216,35 @@ class _MainScreenState extends State<MainScreen> {
                       style: TextStyle(fontSize: 20, fontFamily: "Brand-Bold"),
                     ),
                     Divider(height: 24),
-                    Container(
-                      height: MediaQuery.of(context).size.height / 20,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(5)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 6,
-                            spreadRadius: 0.5,
-                            offset: Offset(0.7, 0.7),
-                          ),
-                        ],
+                    InkWell(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => SearchScreen(),
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 4),
-                          Icon(Icons.search, color: Colors.blueAccent),
-                          const SizedBox(height: 8, width: 8),
-                          Text('Search Drop off'),
-                        ],
+                      splashColor: Colors.orange.withAlpha(200),
+                      child: Container(
+                        height: MediaQuery.of(context).size.height / 17,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black54,
+                              blurRadius: 6,
+                              spreadRadius: 0.5,
+                              offset: Offset(0.7, 0.7),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 4),
+                            Icon(Icons.search, color: Colors.blueAccent),
+                            const SizedBox(height: 8, width: 8),
+                            Text('Search Drop off'),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -205,36 +252,46 @@ class _MainScreenState extends State<MainScreen> {
                       children: [
                         Icon(Icons.home, color: Colors.grey),
                         const SizedBox(width: 12),
-                        Column(
-                          children: [
-                            Text('Add Home'),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Your living home address.',
-                              style: TextStyle(
-                                  color: Colors.grey[400], fontSize: 12),
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(addressDataUser != null
+                                  ? addressDataUser.placeName
+                                  : 'Add Home'),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your living home address.',
+                                style: TextStyle(
+                                    color: Colors.grey[400], fontSize: 12),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    Divider(height: 24),
-                    Row(
-                      children: [
-                        Icon(Icons.work, color: Colors.grey),
-                        const SizedBox(width: 12),
-                        Column(
-                          children: [
-                            Text('Add Work'),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Your Office address.',
-                              style: TextStyle(
-                                  color: Colors.grey[400], fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Divider(
+                      height: 16,
+                      color: Colors.black38,
+                      thickness: 0.5,
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.work, color: Colors.grey),
+                          const SizedBox(width: 12),
+                          Column(
+                            children: [
+                              Text('Add Work'),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your Office address.',
+                                style: TextStyle(
+                                    color: Colors.grey[400], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

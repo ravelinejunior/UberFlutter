@@ -1,5 +1,5 @@
 import 'package:UberFlutter/main.dart';
-import 'package:UberFlutter/screens/main_screen.dart';
+import 'package:UberFlutter/screens/main/main_screen.dart';
 import 'package:UberFlutter/screens/signup/signup_screen.dart';
 import 'package:UberFlutter/store/users/user_store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
