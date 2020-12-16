@@ -59,16 +59,29 @@ class PredictionTile extends StatelessWidget {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Container(
-          height: 100,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          height: 170,
+          child: Column(
             children: [
               Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation(Colors.orangeAccent),
-                ),
+                child: Icon(Icons.not_listed_location,
+                    color: Colors.deepOrangeAccent, size: 56),
               ),
-              Text('Loading the data ... '),
+              Divider(
+                height: 24,
+                thickness: 2,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(Colors.orangeAccent),
+                    ),
+                  ),
+                  Text('Loading the data ... '),
+                ],
+              ),
             ],
           ),
         ),
