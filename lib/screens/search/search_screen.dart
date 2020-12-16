@@ -1,4 +1,5 @@
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
+import 'package:UberFlutter/model/address.dart';
 import 'package:UberFlutter/model/placePredictions.dart';
 import 'package:UberFlutter/request/requestAssistant.dart';
 import 'package:UberFlutter/screens/search/components/predictionTile.dart';
