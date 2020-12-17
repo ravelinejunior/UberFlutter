@@ -91,9 +91,6 @@ class PredictionTile extends StatelessWidget {
     String placeDetailUrl =
         "https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$mapKey_2";
 
-    Future.delayed(Duration(seconds: 2))
-        .then((value) => Navigator.of(context).pop());
-
     final response = await RequestAssistant.getRequest(placeDetailUrl);
     if (response == "Failed") return;
 
@@ -102,12 +99,12 @@ class PredictionTile extends StatelessWidget {
       address.placeName = response['result']['name'];
       address.placeId = placeId;
       address.latitude = response['result']['geometry']['location']['lat'];
-      address.latitude = response['result']['geometry']['location']['lng'];
+      address.longitude = response['result']['geometry']['location']['lng'];
 
       Provider.of<AppData>(context, listen: false)
           .updateDropOffLocationAddress(address);
-
-      print("Location drop ${address.placeName}");
+      Navigator.of(context).pop();
+      Navigator.pop(context, 'obtainDirection');
     }
   }
 }

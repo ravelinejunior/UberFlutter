@@ -63,8 +63,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                     controller: pickController,
                                     cursorColor: Colors.black,
                                     decoration: InputDecoration(
-                                      hintText:
-                                          placeAddress ?? "Pickup Location",
+                                      hintText: placeAddress != null
+                                          ? placeAddress
+                                          : "Pickup Location",
                                       filled: true,
                                       isDense: true,
                                       hintStyle:

@@ -217,11 +217,17 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     Divider(height: 24),
                     InkWell(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SearchScreen(),
-                        ),
-                      ),
+                      onTap: () async {
+                        var response = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SearchScreen(),
+                          ),
+                        );
+
+                        if (response == 'obtainDirection')
+                          await getPlaceDirection();
+                      },
                       splashColor: Colors.orange.withAlpha(200),
                       child: Container(
                         height: MediaQuery.of(context).size.height / 17,
@@ -242,7 +248,7 @@ class _MainScreenState extends State<MainScreen> {
                             const SizedBox(width: 4),
                             Icon(Icons.search, color: Colors.blueAccent),
                             const SizedBox(height: 8, width: 8),
-                            Text('Search Drop off'),
+                            Text('Search DropOff'),
                           ],
                         ),
                       ),
@@ -304,5 +310,101 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> getPlaceDirection() async {
+    final initialPos =
+        Provider.of<AppData>(context, listen: false).pickUpLocation;
+    final finalPos =
+        Provider.of<AppData>(context, listen: false).dropOffLocation;
+
+    final pickUpLatLng = LatLng(initialPos.latitude, initialPos.longitude);
+    final dropOffLatLng = LatLng(finalPos.latitude, finalPos.longitude);
+
+    /* await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Container(
+          height: 170,
+          child: Column(
+            children: [
+              Center(
+                child: Icon(Icons.location_searching,
+                    color: Colors.deepOrangeAccent, size: 56),
+              ),
+              Divider(
+                height: 24,
+                thickness: 2,
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.redAccent),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Setting your Dropoff Location ... ',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ); */
+
+    scaffoldKey.currentState.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+        content: Container(
+          height: 170,
+          child: Column(
+            children: [
+              Center(
+                child: Icon(Icons.location_searching,
+                    color: Colors.deepOrangeAccent, size: 56),
+              ),
+              Divider(
+                height: 24,
+                thickness: 2,
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.redAccent),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Setting your Dropoff Location ... ',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    var details = await AssistantMethods.obtainPlaceDirectionDetails(
+        pickUpLatLng, dropOffLatLng);
+    //  Navigator.pop(context);
+
+    print("Encoded points \n${details.encodedPoints}");
   }
 }
