@@ -6,6 +6,7 @@ import 'package:UberFlutter/screens/search/search_screen.dart';
 import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,10 @@ class _MainScreenState extends State<MainScreen> {
   Position currentPosition;
   final geolocator = Geolocator();
   final mapStore = MapStore();
+  List<LatLng> pLineCoordinates = [];
+  Set<Polyline> polyLineSet = {};
+  Set<Marker> markersSet = {};
+  Set<Circle> circlesSet = {};
 
   //position
   Future<void> locatePosition() async {
@@ -133,6 +138,9 @@ class _MainScreenState extends State<MainScreen> {
               zoomGesturesEnabled: true,
               myLocationButtonEnabled: true,
               myLocationEnabled: true,
+              polylines: polyLineSet,
+              circles: circlesSet,
+              markers: markersSet,
               zoomControlsEnabled: true,
               onMapCreated: (controller) {
                 _controller.complete(controller);
@@ -321,50 +329,10 @@ class _MainScreenState extends State<MainScreen> {
     final pickUpLatLng = LatLng(initialPos.latitude, initialPos.longitude);
     final dropOffLatLng = LatLng(finalPos.latitude, finalPos.longitude);
 
-    /* await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Container(
-          height: 170,
-          child: Column(
-            children: [
-              Center(
-                child: Icon(Icons.location_searching,
-                    color: Colors.deepOrangeAccent, size: 56),
-              ),
-              Divider(
-                height: 24,
-                thickness: 2,
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.redAccent),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Setting your Dropoff Location ... ',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ); */
-
     scaffoldKey.currentState.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 3),
+        duration: Duration(seconds: 1),
         content: Container(
           height: 170,
           child: Column(
@@ -403,8 +371,96 @@ class _MainScreenState extends State<MainScreen> {
 
     var details = await AssistantMethods.obtainPlaceDirectionDetails(
         pickUpLatLng, dropOffLatLng);
-    //  Navigator.pop(context);
 
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> decodedPolylineResults =
+        polylinePoints.decodePolyline(details.encodedPoints);
+
+    pLineCoordinates.clear();
+
+    if (decodedPolylineResults.isNotEmpty) {
+      decodedPolylineResults.forEach((PointLatLng pointLatLng) {
+        pLineCoordinates
+            .add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+      });
+    }
+
+    polyLineSet.clear();
+
+    setState(() {
+      Polyline polyline = Polyline(
+        color: Colors.pink,
+        polylineId: PolylineId('PolylineID'),
+        jointType: JointType.round,
+        points: pLineCoordinates,
+        width: 5,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        geodesic: true,
+      );
+
+      polyLineSet.add(polyline);
+    });
+
+    LatLngBounds latLngBounds;
+    if (pickUpLatLng.latitude > dropOffLatLng.latitude &&
+        pickUpLatLng.longitude > dropOffLatLng.longitude) {
+      latLngBounds =
+          LatLngBounds(southwest: dropOffLatLng, northeast: pickUpLatLng);
+    } else if (pickUpLatLng.longitude > dropOffLatLng.longitude) {
+      latLngBounds = LatLngBounds(
+          southwest: LatLng(pickUpLatLng.latitude, dropOffLatLng.longitude),
+          northeast: LatLng(dropOffLatLng.latitude, pickUpLatLng.longitude));
+    } else if (pickUpLatLng.latitude > dropOffLatLng.latitude) {
+      latLngBounds = LatLngBounds(
+          southwest: LatLng(dropOffLatLng.latitude, pickUpLatLng.longitude),
+          northeast: LatLng(pickUpLatLng.latitude, dropOffLatLng.longitude));
+    }
+
+    googleMapController
+        .animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 70));
+
+    Marker pickUpLocMarker = Marker(
+        position: pickUpLatLng,
+        markerId: MarkerId('pickUpId'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
+        infoWindow:
+            InfoWindow(title: initialPos.placeName, snippet: 'My Location'));
+
+    Marker dropOffLocMarker = Marker(
+        position: dropOffLatLng,
+        markerId: MarkerId('dropOffId'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow:
+            InfoWindow(title: finalPos.placeName, snippet: 'DropOff Location'));
+
+    setState(() {
+      markersSet.add(pickUpLocMarker);
+      markersSet.add(dropOffLocMarker);
+    });
+
+    Circle pickUpCircle = Circle(
+      fillColor: Colors.blue,
+      center: pickUpLatLng,
+      radius: 16,
+      strokeWidth: 4,
+      strokeColor: Colors.blueAccent,
+      circleId: CircleId('pickUpId')
+    );
+
+    Circle dropOffCircle = Circle(
+        fillColor: Colors.red,
+        center: pickUpLatLng,
+        radius: 16,
+        strokeWidth: 4,
+        strokeColor: Colors.redAccent,
+        circleId: CircleId('dropOffId')
+    );
+
+    setState(() {
+      circlesSet.add(pickUpCircle);
+      circlesSet.add(dropOffCircle);
+    });
     print("Encoded points \n${details.encodedPoints}");
   }
 }
