@@ -7,6 +7,7 @@ import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -314,7 +315,129 @@ class _MainScreenState extends State<MainScreen> {
             left: 0.0,
             right: 0.0,
             bottom: 0.0,
-          )
+          ),
+
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              height: MediaQuery.of(context).size.height / 3,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black,
+                    blurRadius: 16,
+                    spreadRadius: 0.5,
+                    offset: Offset(0.7, 0.7),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      color: Colors.deepOrangeAccent.withAlpha(150),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Image.asset('images/taxi.png',
+                                height: 70, width: 80),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Car',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontFamily: 'Brand-Bold',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '10 Km',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Brand-Bold',
+                                    color: Colors.black45,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.moneyCheckAlt,
+                            size: 18,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 16),
+                          Text('Payment'),
+                          const SizedBox(width: 6),
+                          Icon(Icons.keyboard_arrow_down,
+                              color: Colors.black54, size: 16),
+                        ],
+                      ),
+                    ),
+                    Divider(),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: RaisedButton.icon(
+                        elevation: 5,
+                        color: Colors.deepOrangeAccent,
+                        shape: StadiumBorder(),
+                        splashColor: Colors.amber,
+                        onPressed: () {
+                          print("Clicked");
+                        },
+                        icon: Icon(
+                          FontAwesomeIcons.carAlt,
+                          color: Colors.black87,
+                        ),
+                        label: Padding(
+                          padding: const EdgeInsets.all(17.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Request',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontFamily: 'Brand-Bold',
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -440,13 +563,12 @@ class _MainScreenState extends State<MainScreen> {
     });
 
     Circle pickUpCircle = Circle(
-      fillColor: Colors.blue,
-      center: pickUpLatLng,
-      radius: 16,
-      strokeWidth: 4,
-      strokeColor: Colors.blueAccent,
-      circleId: CircleId('pickUpId')
-    );
+        fillColor: Colors.blue,
+        center: pickUpLatLng,
+        radius: 16,
+        strokeWidth: 4,
+        strokeColor: Colors.blueAccent,
+        circleId: CircleId('pickUpId'));
 
     Circle dropOffCircle = Circle(
         fillColor: Colors.red,
@@ -454,8 +576,7 @@ class _MainScreenState extends State<MainScreen> {
         radius: 16,
         strokeWidth: 4,
         strokeColor: Colors.redAccent,
-        circleId: CircleId('dropOffId')
-    );
+        circleId: CircleId('dropOffId'));
 
     setState(() {
       circlesSet.add(pickUpCircle);
