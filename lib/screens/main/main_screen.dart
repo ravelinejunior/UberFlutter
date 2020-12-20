@@ -19,7 +19,7 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController googleMapController;
   final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -30,6 +30,9 @@ class _MainScreenState extends State<MainScreen> {
   Set<Polyline> polyLineSet = {};
   Set<Marker> markersSet = {};
   Set<Circle> circlesSet = {};
+  double rideDetailsContainerHeight = 0;
+  double searchContainerHeight = 350.0;
+  double bottomPaddingOfMap = 0;
 
   //position
   Future<void> locatePosition() async {
@@ -45,17 +48,19 @@ class _MainScreenState extends State<MainScreen> {
     print("My address: $address");
   }
 
+  Future<void> displayRideDetailsContainer() async {
+    await getPlaceDirection();
+
+    setState(() {
+      searchContainerHeight = 0;
+      rideDetailsContainerHeight = 280;
+    });
+  }
+
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(-19.9604937, -43.9955722),
     tilt: 59.440717697143555,
     zoom: 14.4746,
-  );
-
-  static final CameraPosition _kLake = CameraPosition(
-    bearing: 192.8334901395799,
-    target: LatLng(37.43296265331129, -122.08832357078792),
-    tilt: 59.440717697143555,
-    zoom: 19.151926040649414,
   );
 
   @override
@@ -193,122 +198,127 @@ class _MainScreenState extends State<MainScreen> {
           ),
 
           Positioned(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height / 2.5,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(16),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 16,
-                    spreadRadius: 0.5,
-                    offset: Offset(0.7, 0.7),
+            child: AnimatedSize(
+              vsync: this,
+              curve: Curves.bounceIn,
+              duration: Duration(milliseconds: 160),
+              child: Container(
+                height: searchContainerHeight,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(16),
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
-                    Text(
-                      'Hi there, ',
-                      style: TextStyle(fontSize: 12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      blurRadius: 16,
+                      spreadRadius: 0.5,
+                      offset: Offset(0.7, 0.7),
                     ),
-                    Text(
-                      'Where to',
-                      style: TextStyle(fontSize: 20, fontFamily: "Brand-Bold"),
-                    ),
-                    Divider(height: 24),
-                    InkWell(
-                      onTap: () async {
-                        var response = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SearchScreen(),
-                          ),
-                        );
-
-                        if (response == 'obtainDirection')
-                          await getPlaceDirection();
-                      },
-                      splashColor: Colors.orange.withAlpha(200),
-                      child: Container(
-                        height: MediaQuery.of(context).size.height / 17,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(5)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black54,
-                              blurRadius: 6,
-                              spreadRadius: 0.5,
-                              offset: Offset(0.7, 0.7),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
+                      Text(
+                        'Hi there, ',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      Text(
+                        'Where to',
+                        style:
+                            TextStyle(fontSize: 20, fontFamily: "Brand-Bold"),
+                      ),
+                      Divider(height: 24),
+                      InkWell(
+                        onTap: () async {
+                          var response = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchScreen(),
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 4),
-                            Icon(Icons.search, color: Colors.blueAccent),
-                            const SizedBox(height: 8, width: 8),
-                            Text('Search DropOff'),
-                          ],
+                          );
+
+                          if (response == 'obtainDirection')
+                            displayRideDetailsContainer();
+                        },
+                        splashColor: Colors.orange.withAlpha(200),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height / 17,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black54,
+                                blurRadius: 6,
+                                spreadRadius: 0.5,
+                                offset: Offset(0.7, 0.7),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 4),
+                              Icon(Icons.search, color: Colors.blueAccent),
+                              const SizedBox(height: 8, width: 8),
+                              Text('Search DropOff'),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Icon(Icons.home, color: Colors.grey),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(addressDataUser != null
-                                  ? addressDataUser.placeName
-                                  : 'Add Home'),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Your living home address.',
-                                style: TextStyle(
-                                    color: Colors.grey[400], fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    Divider(
-                      height: 16,
-                      color: Colors.black38,
-                      thickness: 0.5,
-                    ),
-                    Expanded(
-                      child: Row(
+                      const SizedBox(height: 24),
+                      Row(
                         children: [
-                          Icon(Icons.work, color: Colors.grey),
+                          Icon(Icons.home, color: Colors.grey),
                           const SizedBox(width: 12),
-                          Column(
-                            children: [
-                              Text('Add Work'),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Your Office address.',
-                                style: TextStyle(
-                                    color: Colors.grey[400], fontSize: 12),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(addressDataUser != null
+                                    ? addressDataUser.placeName
+                                    : 'Add Home'),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Your living home address.',
+                                  style: TextStyle(
+                                      color: Colors.grey[400], fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      Divider(
+                        height: 16,
+                        color: Colors.black38,
+                        thickness: 0.5,
+                      ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.work, color: Colors.grey),
+                            const SizedBox(width: 12),
+                            Column(
+                              children: [
+                                Text('Add Work'),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Your Office address.',
+                                  style: TextStyle(
+                                      color: Colors.grey[400], fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -321,119 +331,124 @@ class _MainScreenState extends State<MainScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              height: MediaQuery.of(context).size.height / 3,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 16,
-                    spreadRadius: 0.5,
-                    offset: Offset(0.7, 0.7),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      color: Colors.deepOrangeAccent.withAlpha(150),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Image.asset('images/taxi.png',
-                                height: 70, width: 80),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Car',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontFamily: 'Brand-Bold',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '10 Km',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: 'Brand-Bold',
-                                    color: Colors.black45,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+            child: AnimatedSize(
+              vsync: this,
+              curve: Curves.bounceIn,
+              duration: Duration(milliseconds: 160),
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                height: rideDetailsContainerHeight,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      blurRadius: 16,
+                      spreadRadius: 0.5,
+                      offset: Offset(0.7, 0.7),
                     ),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            FontAwesomeIcons.moneyCheckAlt,
-                            size: 18,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 16),
-                          Text('Payment'),
-                          const SizedBox(width: 6),
-                          Icon(Icons.keyboard_arrow_down,
-                              color: Colors.black54, size: 16),
-                        ],
-                      ),
-                    ),
-                    Divider(),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: RaisedButton.icon(
-                        elevation: 5,
-                        color: Colors.deepOrangeAccent,
-                        shape: StadiumBorder(),
-                        splashColor: Colors.amber,
-                        onPressed: () {
-                          print("Clicked");
-                        },
-                        icon: Icon(
-                          FontAwesomeIcons.carAlt,
-                          color: Colors.black87,
-                        ),
-                        label: Padding(
-                          padding: const EdgeInsets.all(17.0),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        color: Colors.deepOrangeAccent.withAlpha(150),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Request',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontFamily: 'Brand-Bold',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
+                              Image.asset('images/taxi.png',
+                                  height: 70, width: 80),
+                              const SizedBox(width: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Car',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontFamily: 'Brand-Bold',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '10 Km',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Brand-Bold',
+                                      color: Colors.black45,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.moneyCheckAlt,
+                              size: 18,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 16),
+                            Text('Payment'),
+                            const SizedBox(width: 6),
+                            Icon(Icons.keyboard_arrow_down,
+                                color: Colors.black54, size: 16),
+                          ],
+                        ),
+                      ),
+                      Divider(),
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: RaisedButton.icon(
+                          elevation: 5,
+                          color: Colors.deepOrangeAccent,
+                          shape: StadiumBorder(),
+                          splashColor: Colors.amber,
+                          onPressed: () {
+                            print("Clicked");
+                          },
+                          icon: Icon(
+                            FontAwesomeIcons.carAlt,
+                            color: Colors.black87,
+                          ),
+                          label: Padding(
+                            padding: const EdgeInsets.all(17.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Request',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontFamily: 'Brand-Bold',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -455,7 +470,6 @@ class _MainScreenState extends State<MainScreen> {
     scaffoldKey.currentState.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 1),
         content: Container(
           height: 170,
           child: Column(
@@ -538,6 +552,9 @@ class _MainScreenState extends State<MainScreen> {
       latLngBounds = LatLngBounds(
           southwest: LatLng(dropOffLatLng.latitude, pickUpLatLng.longitude),
           northeast: LatLng(pickUpLatLng.latitude, dropOffLatLng.longitude));
+    } else {
+      latLngBounds =
+          LatLngBounds(southwest: pickUpLatLng, northeast: dropOffLatLng);
     }
 
     googleMapController
