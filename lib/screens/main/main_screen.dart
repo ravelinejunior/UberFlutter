@@ -57,6 +57,15 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> displayRideContainer() async {
+    await locatePosition();
+
+    setState(() {
+      searchContainerHeight = 350;
+      rideDetailsContainerHeight = 0;
+    });
+  }
+
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(-19.9604937, -43.9955722),
     tilt: 59.440717697143555,
@@ -108,15 +117,40 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               //buttons of drawer
               const SizedBox(height: 8),
               //Drawer Body Controllers
-              ListTile(
-                leading: Icon(Icons.history),
-                title: Text('History', style: TextStyle(fontSize: 16)),
+              InkWell(
+                splashColor: Colors.red.shade400,
+                onTap: () async {
+                  var response = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SearchScreen(),
+                    ),
+                  );
+
+                  if (response == 'obtainDirection')
+                    displayRideDetailsContainer();
+                  Navigator.of(context).pop();
+                },
+                child: ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text('History', style: TextStyle(fontSize: 16)),
+                ),
               ),
+
               Divider(indent: 8, endIndent: 8),
-              ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Profile', style: TextStyle(fontSize: 16)),
+
+              InkWell(
+                splashColor: Colors.green.shade400,
+                onTap: () async {
+                  displayRideContainer();
+                  Navigator.of(context).pop();
+                },
+                child: ListTile(
+                  leading: Icon(FontAwesomeIcons.personBooth),
+                  title: Text('Profile', style: TextStyle(fontSize: 16)),
+                ),
               ),
+
               Divider(indent: 8, endIndent: 8),
               ListTile(
                 leading: Icon(Icons.monetization_on),
@@ -526,7 +560,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     setState(() {
       Polyline polyline = Polyline(
-        color: Colors.pink,
+        color: Colors.blue,
         polylineId: PolylineId('PolylineID'),
         jointType: JointType.round,
         points: pLineCoordinates,
