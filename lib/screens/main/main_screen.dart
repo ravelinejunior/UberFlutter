@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
+import 'package:UberFlutter/model/directionDetails.dart';
 import 'package:UberFlutter/request/assistantMethods.dart';
 import 'package:UberFlutter/screens/search/search_screen.dart';
 import 'package:UberFlutter/store/map/map_store.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -33,6 +35,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   double rideDetailsContainerHeight = 0;
   double searchContainerHeight = 350.0;
   double bottomPaddingOfMap = 0;
+  double rideContainerRequestHeight = 0;
+  DirectionDetails directionDetailsTrip;
+  bool drawerOpen = true;
 
   //position
   Future<void> locatePosition() async {
@@ -45,7 +50,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     String address =
         await AssistantMethods.searchCoordinateAddress(position, context);
-    print("My address: $address");
   }
 
   Future<void> displayRideDetailsContainer() async {
@@ -54,15 +58,18 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     setState(() {
       searchContainerHeight = 0;
       rideDetailsContainerHeight = 280;
+      rideContainerRequestHeight = 0;
+      drawerOpen = false;
+      bottomPaddingOfMap = 230;
     });
   }
 
-  Future<void> displayRideContainer() async {
-    await locatePosition();
-
+  void displayRequestRideContainer() {
     setState(() {
-      searchContainerHeight = 350;
+      rideContainerRequestHeight = 280;
       rideDetailsContainerHeight = 0;
+      drawerOpen = false;
+      bottomPaddingOfMap = 230;
     });
   }
 
@@ -71,6 +78,22 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     tilt: 59.440717697143555,
     zoom: 14.4746,
   );
+
+  resetApp() {
+    setState(() {
+      searchContainerHeight = 350;
+      rideDetailsContainerHeight = 0;
+      drawerOpen = true;
+      bottomPaddingOfMap = 230;
+      rideContainerRequestHeight = 0;
+      polyLineSet.clear();
+      markersSet.clear();
+      circlesSet.clear();
+      pLineCoordinates.clear();
+    });
+
+    locatePosition();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +152,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
                   if (response == 'obtainDirection')
                     displayRideDetailsContainer();
-                  Navigator.of(context).pop();
                 },
                 child: ListTile(
                   leading: Icon(Icons.history),
@@ -141,10 +163,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
               InkWell(
                 splashColor: Colors.green.shade400,
-                onTap: () async {
-                  displayRideContainer();
-                  Navigator.of(context).pop();
-                },
+                onTap: () {},
                 child: ListTile(
                   leading: Icon(FontAwesomeIcons.personBooth),
                   title: Text('Profile', style: TextStyle(fontSize: 16)),
@@ -172,7 +191,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             return GoogleMap(
               padding: EdgeInsets.only(bottom: mapStore.paddingBottom),
               initialCameraPosition: _kGooglePlex,
-              mapType: MapType.satellite,
+              mapType: MapType.normal,
               buildingsEnabled: true,
               compassEnabled: true,
               zoomGesturesEnabled: true,
@@ -186,7 +205,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 _controller.complete(controller);
                 googleMapController = controller;
 
-                mapStore.setBottomPadding(350);
+                mapStore.setBottomPadding(bottomPaddingOfMap);
 
                 //get Current position
                 locatePosition();
@@ -205,7 +224,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             child: InkWell(
               splashColor: Colors.orange,
               onTap: () {
-                scaffoldKey.currentState.openDrawer();
+                if (drawerOpen)
+                  scaffoldKey.currentState.openDrawer();
+                else
+                  resetApp();
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -222,7 +244,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 ),
                 child: CircleAvatar(
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.menu),
+                  child: Icon((drawerOpen) ? Icons.menu : Icons.close,
+                      color: Colors.black),
                   radius: 20,
                 ),
               ),
@@ -235,7 +258,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             child: AnimatedSize(
               vsync: this,
               curve: Curves.bounceIn,
-              duration: Duration(milliseconds: 160),
+              duration: Duration(milliseconds: 500),
               child: Container(
                 height: searchContainerHeight,
                 decoration: BoxDecoration(
@@ -368,7 +391,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             child: AnimatedSize(
               vsync: this,
               curve: Curves.bounceIn,
-              duration: Duration(milliseconds: 160),
+              duration: Duration(milliseconds: 500),
               child: Container(
                 clipBehavior: Clip.antiAlias,
                 height: rideDetailsContainerHeight,
@@ -414,7 +437,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '10 Km',
+                                    directionDetailsTrip != null
+                                        ? directionDetailsTrip.distanceText
+                                        : '10km',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontFamily: 'Brand-Bold',
@@ -424,6 +449,32 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
+                              Expanded(
+                                  child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Race cost',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Brand-Bold',
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    directionDetailsTrip != null
+                                        ? '\$${AssistantMethods.calculateFares(directionDetailsTrip).toStringAsFixed(2)}'
+                                        : '\$5,99',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Brand-Bold',
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ))
                             ],
                           ),
                         ),
@@ -456,7 +507,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                           shape: StadiumBorder(),
                           splashColor: Colors.amber,
                           onPressed: () {
-                            print("Clicked");
+                            displayRequestRideContainer();
                           },
                           icon: Icon(
                             FontAwesomeIcons.carAlt,
@@ -483,6 +534,85 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
+                ),
+              ),
+            ),
+          ),
+
+          Positioned(
+            left: 0,
+            bottom: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16)),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    spreadRadius: 0.5,
+                    blurRadius: 16,
+                    color: Colors.black54,
+                    offset: Offset(0.7, 0.7),
+                  ),
+                ],
+              ),
+              height: rideContainerRequestHeight,
+              child: Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ColorizeAnimatedTextKit(
+                        onTap: () {},
+                        text: [
+                          "Requesting a Ride",
+                          "Please wait ...",
+                          "Finding a Driver",
+                        ],
+                        textStyle:
+                            TextStyle(fontSize: 55.0, fontFamily: "Signatra"),
+                        colors: [
+                          Colors.green,
+                          Colors.yellow,
+                          Colors.orange,
+                          Colors.red,
+                          Colors.pink,
+                          Colors.purple,
+                        ],
+                        isRepeatingAnimation: true,
+                        textAlign: TextAlign.center,
+                        alignment: AlignmentDirectional.topStart,
+                      ),
+                    ),
+                    Divider(),
+                    const SizedBox(height: 24),
+                    Container(
+                      height: 60,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(width: 2, color: Colors.grey[300]),
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      child: Text(
+                        'Cancel Ride',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    )
+                  ],
                 ),
               ),
             ),
@@ -543,6 +673,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     var details = await AssistantMethods.obtainPlaceDirectionDetails(
         pickUpLatLng, dropOffLatLng);
 
+    //trip calculate
+    directionDetailsTrip = details;
+
     PolylinePoints polylinePoints = PolylinePoints();
     List<PointLatLng> decodedPolylineResults =
         polylinePoints.decodePolyline(details.encodedPoints);
@@ -560,7 +693,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     setState(() {
       Polyline polyline = Polyline(
-        color: Colors.blue,
+        color: Colors.pink,
         polylineId: PolylineId('PolylineID'),
         jointType: JointType.round,
         points: pLineCoordinates,
@@ -633,6 +766,5 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       circlesSet.add(pickUpCircle);
       circlesSet.add(dropOffCircle);
     });
-    print("Encoded points \n${details.encodedPoints}");
   }
 }

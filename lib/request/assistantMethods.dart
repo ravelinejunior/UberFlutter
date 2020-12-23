@@ -61,4 +61,14 @@ class AssistantMethods {
 
     return details;
   }
+
+  static double calculateFares(DirectionDetails directionDetails) {
+    // in terms of USD
+    double timeTraveledFare = (directionDetails.durationValue / 60) * 0.20;
+    double distanceTraveledFare =
+        (directionDetails.distanceValue / 1000) * 0.20;
+    double totalFare = timeTraveledFare + distanceTraveledFare;
+    double totalFareInReais = totalFare * 5;
+    return totalFareInReais;
+  }
 }
