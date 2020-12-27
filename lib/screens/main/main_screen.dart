@@ -4,9 +4,11 @@ import 'package:UberFlutter/config/user_config/userConfig.dart';
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
 import 'package:UberFlutter/model/directionDetails.dart';
 import 'package:UberFlutter/request/assistantMethods.dart';
+import 'package:UberFlutter/screens/login/login_screen.dart';
 import 'package:UberFlutter/screens/search/search_screen.dart';
 import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -41,6 +43,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   DirectionDetails directionDetailsTrip;
   bool drawerOpen = true;
   DatabaseReference rideRequestRef;
+  MapType mapType = MapType.normal;
+  bool mapTypeChanged = false;
 
   //position
   Future<void> locatePosition() async {
@@ -191,7 +195,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               const SizedBox(height: 8),
               //Drawer Body Controllers
               InkWell(
-                splashColor: Colors.red.shade400,
+                splashColor: Colors.red,
                 onTap: () async {
                   var response = await Navigator.push(
                     context,
@@ -204,31 +208,82 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     displayRideDetailsContainer();
                 },
                 child: ListTile(
-                  leading: Icon(Icons.history),
-                  title: Text('History', style: TextStyle(fontSize: 16)),
+                  leading: Icon(FontAwesomeIcons.history,
+                      size: 24, color: Colors.blue),
+                  title: Text('History',
+                      style: TextStyle(fontSize: 16, color: Colors.blue)),
                 ),
               ),
 
               Divider(indent: 8, endIndent: 8),
 
               InkWell(
-                splashColor: Colors.green.shade400,
+                splashColor: Colors.blueAccent,
                 onTap: () {},
                 child: ListTile(
-                  leading: Icon(FontAwesomeIcons.personBooth),
-                  title: Text('Profile', style: TextStyle(fontSize: 16)),
+                  leading: Icon(
+                    Icons.person_pin,
+                    size: 34,
+                    color: Colors.deepOrange,
+                  ),
+                  title: Text('Profile',
+                      style: TextStyle(fontSize: 16, color: Colors.deepOrange)),
                 ),
               ),
 
               Divider(indent: 8, endIndent: 8),
               ListTile(
-                leading: Icon(Icons.monetization_on),
-                title: Text('Discounts', style: TextStyle(fontSize: 16)),
+                leading: Icon(FontAwesomeIcons.moneyBillWaveAlt,
+                    size: 24, color: Colors.lightBlue),
+                title: Text('Discounts',
+                    style: TextStyle(fontSize: 16, color: Colors.lightBlue)),
               ),
               Divider(indent: 8, endIndent: 8),
+
               ListTile(
-                leading: Icon(Icons.info),
-                title: Text('About', style: TextStyle(fontSize: 16)),
+                leading: Icon(FontAwesomeIcons.infoCircle,
+                    size: 24, color: Colors.grey[600]),
+                title: Text('About',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+              ),
+              Divider(indent: 8, endIndent: 8),
+
+              InkWell(
+                splashColor: Colors.lightGreenAccent,
+                onTap: () {
+                  setState(() {
+                    if (mapTypeChanged) {
+                      mapType = MapType.normal;
+                      mapTypeChanged = false;
+                      Navigator.of(context).pop();
+                    } else {
+                      mapType = MapType.satellite;
+                      mapTypeChanged = true;
+                      Navigator.of(context).pop();
+                    }
+                  });
+                },
+                child: ListTile(
+                  leading: Icon(FontAwesomeIcons.mapMarkedAlt,
+                      size: 24, color: Colors.green[700]),
+                  title: Text('Change Map Type',
+                      style: TextStyle(fontSize: 16, color: Colors.green[700])),
+                ),
+              ),
+              Divider(indent: 8, endIndent: 8),
+
+              InkWell(
+                splashColor: Colors.deepOrangeAccent,
+                onTap: () => FirebaseAuth.instance.signOut().then((_) {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, LoginScreen.idScreen, (route) => false);
+                }),
+                child: ListTile(
+                  leading: Icon(FontAwesomeIcons.signOutAlt,
+                      size: 24, color: Colors.red),
+                  title: Text('SignOut',
+                      style: TextStyle(fontSize: 16, color: Colors.red)),
+                ),
               ),
               Divider(indent: 8, endIndent: 8),
             ],
@@ -241,7 +296,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             return GoogleMap(
               padding: EdgeInsets.only(bottom: mapStore.paddingBottom),
               initialCameraPosition: _kGooglePlex,
-              mapType: MapType.normal,
+              mapType: mapType,
               buildingsEnabled: true,
               compassEnabled: true,
               zoomGesturesEnabled: true,
