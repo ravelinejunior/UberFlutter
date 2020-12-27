@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:UberFlutter/config/user_config/userConfig.dart';
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
 import 'package:UberFlutter/model/directionDetails.dart';
 import 'package:UberFlutter/request/assistantMethods.dart';
 import 'package:UberFlutter/screens/search/search_screen.dart';
 import 'package:UberFlutter/store/map/map_store.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -38,6 +40,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   double rideContainerRequestHeight = 0;
   DirectionDetails directionDetailsTrip;
   bool drawerOpen = true;
+  DatabaseReference rideRequestRef;
 
   //position
   Future<void> locatePosition() async {
@@ -71,6 +74,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       drawerOpen = false;
       bottomPaddingOfMap = 230;
     });
+
+    saveRideRequest();
   }
 
   static final CameraPosition _kGooglePlex = CameraPosition(
@@ -83,6 +88,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     setState(() {
       searchContainerHeight = 350;
       rideDetailsContainerHeight = 0;
+
       drawerOpen = true;
       bottomPaddingOfMap = 230;
       rideContainerRequestHeight = 0;
@@ -96,8 +102,52 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   @override
+  void initState() {
+    super.initState();
+    AssistantMethods.getCurrentOnlineUserInfo();
+  }
+
+  void saveRideRequest() {
+    rideRequestRef = FirebaseDatabase.instance.reference().child("RequestRide");
+    final pickUp = Provider.of<AppData>(context, listen: false).pickUpLocation;
+    final dropOff =
+        Provider.of<AppData>(context, listen: false).dropOffLocation;
+
+    Map pickUpMapInfo = {
+      'latitude': pickUp.latitude.toString(),
+      'longitude': pickUp.longitude.toString()
+    };
+
+    Map dropOffMapInfo = {
+      'latitude': dropOff.latitude.toString(),
+      'longitude': dropOff.longitude.toString()
+    };
+
+    Map rideMapInfo = {
+      'driver_id': 'waiting',
+      'payment_method': 'credit_card',
+      'pickup': pickUpMapInfo,
+      'dropoff': dropOffMapInfo,
+      'createdAt': DateTime.now().toString(),
+      'rider_name': userCurrent.name,
+      'rider_phone': userCurrent.phone,
+      'rider_email': userCurrent.email,
+      'pickup_address': pickUp.placeName,
+      'dropoff_address': dropOff.placeName
+    };
+
+    rideRequestRef.push().set(rideMapInfo);
+  }
+
+  void cancelRideRequest() {
+    rideRequestRef.remove();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final addressDataUser = Provider.of<AppData>(context).pickUpLocation;
+    final addressDropOffDataUser =
+        Provider.of<AppData>(context).dropOffLocation;
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
@@ -355,21 +405,46 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                         color: Colors.black38,
                         thickness: 0.5,
                       ),
-                      Expanded(
+                      InkWell(
+                        splashColor: Colors.red,
+                        onTap: () async {
+                          var response = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchScreen(),
+                            ),
+                          );
+
+                          if (response == 'obtainDirection')
+                            displayRideDetailsContainer();
+                        },
                         child: Row(
                           children: [
                             Icon(Icons.work, color: Colors.grey),
                             const SizedBox(width: 12),
-                            Column(
-                              children: [
-                                Text('Add Work'),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Your Office address.',
-                                  style: TextStyle(
-                                      color: Colors.grey[400], fontSize: 12),
-                                ),
-                              ],
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    addressDropOffDataUser != null
+                                        ? addressDropOffDataUser
+                                            .placeFormattedAddress
+                                        : 'Add Office',
+                                    softWrap: true,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Your Office address.',
+                                    style: TextStyle(
+                                        color: Colors.grey[400], fontSize: 12),
+                                    softWrap: true,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.clip,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -583,24 +658,30 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                           Colors.pink,
                           Colors.purple,
                         ],
-                        isRepeatingAnimation: true,
                         textAlign: TextAlign.center,
                         alignment: AlignmentDirectional.topStart,
                       ),
                     ),
                     Divider(),
                     const SizedBox(height: 24),
-                    Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        border: Border.all(width: 2, color: Colors.grey[300]),
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        size: 32,
+                    InkWell(
+                      splashColor: Colors.orange,
+                      onTap: () {
+                        cancelRideRequest();
+                        resetApp();
+                      },
+                      child: Container(
+                        height: 60,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(width: 2, color: Colors.grey[300]),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 32,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -739,7 +820,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         markerId: MarkerId('dropOffId'),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         infoWindow:
-            InfoWindow(title: finalPos.placeName, snippet: 'DropOff Location'));
+            InfoWindow(title: finalPos.placeName, snippet: 'Dropoff Location'));
 
     setState(() {
       markersSet.add(pickUpLocMarker);

@@ -1,5 +1,5 @@
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
-import 'package:UberFlutter/model/address.dart';
+
 import 'package:UberFlutter/model/placePredictions.dart';
 import 'package:UberFlutter/request/requestAssistant.dart';
 import 'package:UberFlutter/screens/search/components/predictionTile.dart';
@@ -23,7 +23,9 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     String placeAddress =
-        Provider.of<AppData>(context).pickUpLocation.placeName ?? "";
+        Provider.of<AppData>(context).pickUpLocation.placeName != null
+            ? Provider.of<AppData>(context).pickUpLocation.placeName
+            : "";
     pickController.text = placeAddress;
 
     return Scaffold(

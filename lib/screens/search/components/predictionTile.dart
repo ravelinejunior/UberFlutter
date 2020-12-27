@@ -97,6 +97,7 @@ class PredictionTile extends StatelessWidget {
     if (response['status'] == 'OK') {
       Address address = Address();
       address.placeName = response['result']['name'];
+      address.placeFormattedAddress = response['result']['formatted_address'];
       address.placeId = placeId;
       address.latitude = response['result']['geometry']['location']['lat'];
       address.longitude = response['result']['geometry']['location']['lng'];

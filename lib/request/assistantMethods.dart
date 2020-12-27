@@ -1,8 +1,12 @@
 import 'package:UberFlutter/config/map_config/configMaps.dart';
+import 'package:UberFlutter/config/user_config/userConfig.dart';
 import 'package:UberFlutter/data_handler/DataHandler/appData.dart';
 import 'package:UberFlutter/model/address.dart';
 import 'package:UberFlutter/model/directionDetails.dart';
+import 'package:UberFlutter/model/users.dart';
 import 'package:UberFlutter/request/requestAssistant.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +15,7 @@ class AssistantMethods {
   static Future<String> searchCoordinateAddress(
       Position position, context) async {
     String placeAddress = "";
+    String placeAddressConcat = "";
     String url =
         "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=AIzaSyAXhk1498g3ORPHcP6Wytkouh0Mn28obVo";
     var response = await RequestAssistant.getRequest(url);
@@ -25,12 +30,13 @@ class AssistantMethods {
       st2 = response['results'][0]['address_components'][4]['long_name'];
       st3 = response['results'][0]['address_components'][5]['long_name'];
       st4 = response['results'][0]['address_components'][6]['long_name'];
-      // placeAddress = st1 + ", " + st2 + ", " + st3 + ", " + st4;
+      placeAddressConcat = st1 + ", " + st2 + ", " + st3 + ", " + st4;
 
       Address userAddress = Address();
       userAddress.longitude = position.longitude;
       userAddress.latitude = position.latitude;
       userAddress.placeName = placeAddress;
+      userAddress.placeFormattedAddress = placeAddressConcat;
 
       Provider.of<AppData>(context, listen: false)
           .updatePickUpLocationAddress(userAddress);
@@ -64,11 +70,24 @@ class AssistantMethods {
 
   static double calculateFares(DirectionDetails directionDetails) {
     // in terms of USD
-    double timeTraveledFare = (directionDetails.durationValue / 60) * 0.20;
+    double timeTraveledFare = (directionDetails.durationValue / 60) * 0.15;
     double distanceTraveledFare =
-        (directionDetails.distanceValue / 1000) * 0.20;
+        (directionDetails.distanceValue / 1000) * 0.15;
     double totalFare = timeTraveledFare + distanceTraveledFare;
     double totalFareInReais = totalFare * 5;
     return totalFareInReais;
+  }
+
+  static Future<void> getCurrentOnlineUserInfo() async {
+    firebaseUser = await FirebaseAuth.instance.currentUser;
+    String userId = firebaseUser.uid;
+    DatabaseReference reference =
+        FirebaseDatabase.instance.reference().child('Users').child(userId);
+
+    reference.once().then((DataSnapshot snapShot) {
+      if (snapShot != null) {
+        userCurrent = Users.fromSnapshot(snapShot);
+      }
+    });
   }
 }
